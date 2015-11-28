@@ -489,6 +489,7 @@ static int parse_args(int argc, char *argv[], struct settings_t *psettings)
                 fprintf(stderr, PACKAGE_NAME ": unknown value for --palette16 (-p) option.\n");
                 goto argerr;
             }
+            break;
         default:
             goto argerr;
         }
