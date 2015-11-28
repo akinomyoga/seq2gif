@@ -325,11 +325,11 @@ static void show_help()
             "-s NUM, --play-speed=NUM               specify the factor of the play speed.\n"
             "                                       A larger value means faster play.\n"
             "                                       (default: 1.0)\n"
-            "-p, --palette16=NAME                   specify a color palette name for first\n"
-            "                                       16 colors. NAME is one of the following\n"
-            "                                       names: 'vga', 'cmd', 'app', 'putty',\n"
-            "                                       'mirc', 'xterm', 'rosa', and 'seq2gif'.\n"
-            "                                       (default: 'vga').\n"
+            "-p, --palette16=NAME                   specify a color palette name for the\n"
+            "                                       first 16 colors. NAME is one of the\n"
+            "                                       following names: 'vga', 'cmd', 'app',\n"
+            "                                       'putty', 'mirc', 'xterm', 'rosa', and\n"
+            "                                       'seq2gif'. (default: 'vga').\n"
            );
 }
 
