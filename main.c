@@ -56,6 +56,84 @@
 # define O_BINARY _O_BINARY
 #endif  /* !defined(O_BINARY) && !defined(_O_BINARY) */
 
+/*
+  Standard VGA colors
+
+  byte order: (MSB) RR GG BB (LSB)
+
+  Original seq2gif values
+  - palette16_seq2gif
+
+  Taken from http://en.wikipedia.org/wiki/ANSI_escape_code
+  - palette16_standard_vga Standard VGA colors
+  - palette16_winxp_cmd    Windows XP CMD
+  - palette16_terminal_app Terminal.app
+  - palette16_putty        PuTTY
+  - palette16_mirc         mIRC
+  - palette16_xterm        xterm
+  - palette16_css          CSS/HTML
+  - palette16_x11          X
+
+  rosaterm default
+  - palette16_rosaterm
+*/
+
+const uint32_t palette16_seq2gif[16] = {
+    0x262626, 0xd70000, 0x5f8700, 0xaf8700, 0x0087ff, 0xaf005f, 0x0087ff, 0xe4e4e4,
+    0x1c1c1c, 0xd75f00, 0x585858, 0x626262, 0x808080, 0x5f5faf, 0x8a8a8a, 0xffffd7,
+};
+
+const uint32_t palette16_standard_vga[16] = {
+    0x000000, 0xAA0000, 0x00AA00, 0xAA5500, 0x0000AA, 0xAA00AA, 0x00AAAA, 0xAAAAAA,
+    0x555555, 0xFF5555, 0x55FF55, 0xFFFF55, 0x5555FF, 0xFF55FF, 0x55FFFF, 0xFFFFFF,
+    /*
+    0x000000, 0xAA0000, 0x00AA00, 0xAA5500, 0x0000AA, 0xAA00AA, 0x00AAAA, 0xAAAAAA,
+    0x555555, 0xFF5555, 0x55FF55, 0xFFFF55, 0x5555FF, 0xFF55FF, 0x55FFFF, 0xDFDFDF,
+    */
+};
+
+const uint32_t palette16_winxp_cmd[16] = {
+    0x000000, 0x800000, 0x008000, 0x808000, 0x000080, 0x800080, 0x008080, 0xC0C0C0,
+    0x808080, 0xFF0000, 0x00FF00, 0xFFFF00, 0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+};
+
+const uint32_t palette16_terminal_app[16] = {
+    0x000000, 0xC23621, 0x25BC24, 0xADAD27, 0x492EE1, 0xD338D3, 0x33BBC8, 0xCBCCCD,
+    0x818383, 0xFC391F, 0x31E722, 0xEAEC23, 0x5833FF, 0xF935F8, 0x14F0F0, 0xE9EBEB,
+};
+
+const uint32_t palette16_putty[16] = {
+    0x000000, 0xBB0000, 0x00BB00, 0xBBBB00, 0x0000BB, 0xBB00BB, 0x00BBBB, 0xBBBBBB,
+    0x555555, 0xFF5555, 0x55FF55, 0xFFFF55, 0x5555FF, 0xFF55FF, 0x55FFFF, 0xFFFFFF,
+};
+
+const uint32_t palette16_xterm[16] = {
+    0x000000, 0xCD0000, 0x00CD00, 0xCDCD00, 0x0000EE, 0xCD00CD, 0x00CDCD, 0xE5E5E5,
+    0x7F7F7F, 0xFF0000, 0x00FF00, 0xFFFF00, 0x5C5CFF, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+};
+
+const uint32_t palette16_mirc[16] = {
+    0x000000, 0x7F0000, 0x009300, 0xFC7F00, 0x00007F, 0x9C009C, 0x009393, 0xD2D2D2,
+    0x7F7F7F, 0xFF0000, 0x00FC00, 0xFFFF00, 0x0000FC, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+};
+
+/* non terminal colors (without full specification of bright colors) *\/
+const uint32_t palette16_x11[16] = {
+    0x000000, 0xFF0000, 0x008000, 0xFFFF00, 0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+    unknown,  unknown,  0x90EE90, 0xE1FFE0, 0xADD8E6, unknown,  0xE0FFFF, unknown,
+};
+
+const uint32_t palette16_css[16] = {
+    0x000000, 0xFF0000, 0x00FF00, 0xFFFF00, 0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+    unknown,  unknown,  0x90EE90, 0xFFFFE0, 0xADD8E6, unknown,  0xE0FFFF, unknown,
+};
+/* */
+
+const uint32_t palette16_rosaterm[16] = {
+    0x000000, 0x800000, 0x008000, 0x808000, 0x000080, 0x800080, 0x008080, 0xC0C0C0,
+    0x808080, 0xFF0000, 0x32CD32, 0xFF7D00, 0x0000FF, 0xFF00FF, 0x40E0D0, 0xFFFFFF,
+};
+
 struct settings_t {
     int width;
     int height;
@@ -72,6 +150,7 @@ struct settings_t {
     char *output;
     int render_interval;
     double play_speed;
+    const uint32_t* palette16;
 };
 
 enum cmap_bitfield {
@@ -246,13 +325,18 @@ static void show_help()
             "-s NUM, --play-speed=NUM               specify the factor of the play speed.\n"
             "                                       A larger value means faster play.\n"
             "                                       (default: 1.0)\n"
+            "-p, --palette16=NAME                   specify a color palette name for first\n"
+            "                                       16 colors. NAME is one of the following\n"
+            "                                       names: 'vga', 'cmd', 'app', 'putty',\n"
+            "                                       'mirc', 'xterm', 'rosa', and 'seq2gif'.\n"
+            "                                       (default: 'vga').\n"
            );
 }
 
 static int parse_args(int argc, char *argv[], struct settings_t *psettings)
 {
     int n;
-    char const *optstring = "w:h:HVl:f:b:c:t:jr:i:o:I:s:";
+    char const *optstring = "w:h:HVl:f:b:c:t:jr:i:o:I:s:p:";
 #ifdef HAVE_GETOPT_LONG
     int long_opt;
     int option_index;
@@ -272,6 +356,7 @@ static int parse_args(int argc, char *argv[], struct settings_t *psettings)
         {"version",           no_argument,        &long_opt, 'V'},
         {"render-interval",   required_argument,  &long_opt, 'I'},
         {"play-speed",        required_argument,  &long_opt, 's'},
+        {"palette16",         required_argument,  &long_opt, 'p'},
         {0, 0, 0, 0}
     };
 #endif  /* HAVE_GETOPT_LONG */
@@ -383,6 +468,27 @@ static int parse_args(int argc, char *argv[], struct settings_t *psettings)
                 goto argerr;
             }
             break;
+        case 'p':
+            if (strcmp(optarg,"vga") == 0) {
+                psettings->palette16 = palette16_standard_vga;
+            } else if (strcmp(optarg,"cmd") == 0) {
+                psettings->palette16 = palette16_winxp_cmd;
+            } else if (strcmp(optarg,"app") == 0) {
+                psettings->palette16 = palette16_terminal_app;
+            } else if (strcmp(optarg,"putty") == 0) {
+                psettings->palette16 = palette16_putty;
+            } else if (strcmp(optarg,"mirc") == 0) {
+                psettings->palette16 = palette16_mirc;
+            } else if (strcmp(optarg,"xterm") == 0) {
+                psettings->palette16 = palette16_xterm;
+            } else if (strcmp(optarg,"rosa") == 0) {
+                psettings->palette16 = palette16_rosaterm;
+            } else if (strcmp(optarg,"seq2gif") == 0) {
+                psettings->palette16 = palette16_seq2gif;
+            } else {
+                fprintf(stderr, PACKAGE_NAME ": unknown value for --palette16 (-p) option.\n");
+                goto argerr;
+            }
         default:
             goto argerr;
         }
@@ -525,6 +631,7 @@ int main(int argc, char *argv[])
         NULL,   /* output */
         20,     /* render_interval */
         1.0,    /* play_speed */
+        palette16_standard_vga, /* palette16 */
     };
 
     if (parse_args(argc, argv, &settings) != 0) {
@@ -539,6 +646,10 @@ int main(int argc, char *argv[])
     if (settings.show_version) {
         show_version();
         exit(0);
+    }
+
+    if (settings.palette16) {
+        memcpy(color_list,settings.palette16,sizeof(uint32_t)*16);
     }
 
     /* init */
