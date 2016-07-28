@@ -56,6 +56,11 @@
 # define O_BINARY _O_BINARY
 #endif  /* !defined(O_BINARY) && !defined(_O_BINARY) */
 
+struct colormapping_t {
+    uint32_t (*pixel2index)(uint32_t pixel);
+    void (*set_colormap)(int colormap[COLORS * BYTES_PER_PIXEL + 1]);
+};
+
 struct settings_t {
     int width;
     int height;
@@ -72,6 +77,7 @@ struct settings_t {
     char *output;
     int render_interval;
     double play_speed;
+    struct colormapping_t *cmap;
 };
 
 enum cmap_bitfield {
@@ -97,12 +103,12 @@ static void pb_die(struct pseudobuffer *pb)
     free(pb->buf);
 }
 
-static void set_colormap(int colormap[COLORS * BYTES_PER_PIXEL + 1])
+static void set_colormap_xterm256(int colormap[COLORS * BYTES_PER_PIXEL + 1])
 {
     int i, ci, r, g, b;
     uint8_t index;
 
-    /* colormap: terminal 256color
+    /* colormap: terminal 256color */
     for (i = 0; i < COLORS; i++) {
         ci = i * BYTES_PER_PIXEL;
 
@@ -114,10 +120,16 @@ static void set_colormap(int colormap[COLORS * BYTES_PER_PIXEL + 1])
         colormap[ci + 1] = g;
         colormap[ci + 2] = b;
     }
-    */
 
-    /* colormap: red/green: 3bit blue: 2bit
-    */
+    colormap[COLORS * BYTES_PER_PIXEL] = -1;
+}
+
+static void set_colormap_rgb332(int colormap[COLORS * BYTES_PER_PIXEL + 1])
+{
+    int i, ci, r, g, b;
+    uint8_t index;
+
+    /* colormap: red/green: 3bit blue: 2bit */
     for (i = 0; i < COLORS; i++) {
         index = (uint8_t) i;
         ci = i * BYTES_PER_PIXEL;
@@ -133,7 +145,7 @@ static void set_colormap(int colormap[COLORS * BYTES_PER_PIXEL + 1])
     colormap[COLORS * BYTES_PER_PIXEL] = -1;
 }
 
-static uint32_t pixel2index(uint32_t pixel)
+static uint32_t pixel2index_xterm256(uint32_t pixel)
 {
     /* pixel is always 24bpp */
     uint32_t r, g, b;
@@ -143,7 +155,7 @@ static uint32_t pixel2index(uint32_t pixel)
     g = (pixel >> 8)  & bit_mask[8];
     b = (pixel >> 0)  & bit_mask[8];
 
-    /* colormap: terminal 256color
+    /* colormap: terminal 256color */
     if (r == g && r == b) { // 24 gray scale
         r = 24 * r / COLORS;
         return 232 + r;
@@ -154,10 +166,19 @@ static uint32_t pixel2index(uint32_t pixel)
     b = 6 * b / COLORS;
 
     return 16 + (r * 36) + (g * 6) + b;
-    */
+}
 
-    /* colormap: red/green: 3bit blue: 2bit
-    */
+static uint32_t pixel2index_rgb332(uint32_t pixel)
+{
+    /* pixel is always 24bpp */
+    uint32_t r, g, b;
+
+    /* split r, g, b bits */
+    r = (pixel >> 16) & bit_mask[8];
+    g = (pixel >> 8)  & bit_mask[8];
+    b = (pixel >> 0)  & bit_mask[8];
+
+    /* colormap: red/green: 3bit blue: 2bit */
     // get MSB ..._MASK bits
     r = (r >> (8 - RED_MASK))   & bit_mask[RED_MASK];
     g = (g >> (8 - GREEN_MASK)) & bit_mask[GREEN_MASK];
@@ -166,7 +187,17 @@ static uint32_t pixel2index(uint32_t pixel)
     return (r << RED_SHIFT) | (g << GREEN_SHIFT) | (b << BLUE_SHIFT);
 }
 
-static void apply_colormap(struct pseudobuffer *pb, unsigned char *img)
+static struct colormapping_t cmap_rgb332 = {
+    pixel2index_rgb332,
+    set_colormap_rgb332,
+};
+
+static struct colormapping_t cmap_xterm256 = {
+    pixel2index_xterm256,
+    set_colormap_xterm256,
+};
+
+static void apply_colormap(struct colormapping_t *cmap, struct pseudobuffer *pb, unsigned char *img)
 {
     int w, h;
     uint32_t pixel = 0;
@@ -175,7 +206,7 @@ static void apply_colormap(struct pseudobuffer *pb, unsigned char *img)
         for (w = 0; w < pb->width; w++) {
             memcpy(&pixel, pb->buf + h * pb->line_length
                 + w * pb->bytes_per_pixel, pb->bytes_per_pixel);
-            *(img + h * pb->width + w) = pixel2index(pixel) & bit_mask[BITS_PER_BYTE];
+            *(img + h * pb->width + w) = cmap->pixel2index(pixel) & bit_mask[BITS_PER_BYTE];
         }
     }
 }
@@ -246,13 +277,17 @@ static void show_help()
             "-s NUM, --play-speed=NUM               specify the factor of the play speed.\n"
             "                                       A larger value means faster play.\n"
             "                                       (default: 1.0)\n"
+            "-m COLORMAP, --colormap=COLORMAP       specify a colormap from the following\n"
+            "                                       list (default: xterm256):\n"
+            "                                         rgb332   -> R:3bit, G:3bit, B:2bit\n"
+            "                                         xterm256 -> xterm 256color\n"
            );
 }
 
 static int parse_args(int argc, char *argv[], struct settings_t *psettings)
 {
     int n;
-    char const *optstring = "w:h:HVl:f:b:c:t:jr:i:o:I:s:";
+    char const *optstring = "w:h:HVl:f:b:c:t:jr:i:o:I:s:m:";
 #ifdef HAVE_GETOPT_LONG
     int long_opt;
     int option_index;
@@ -272,6 +307,7 @@ static int parse_args(int argc, char *argv[], struct settings_t *psettings)
         {"version",           no_argument,        &long_opt, 'V'},
         {"render-interval",   required_argument,  &long_opt, 'I'},
         {"play-speed",        required_argument,  &long_opt, 's'},
+        {"colormap",          required_argument,  &long_opt, 'm'},
         {0, 0, 0, 0}
     };
 #endif  /* HAVE_GETOPT_LONG */
@@ -382,6 +418,14 @@ static int parse_args(int argc, char *argv[], struct settings_t *psettings)
             if (psettings->play_speed <= 0.0) {
                 goto argerr;
             }
+            break;
+        case 'm':
+            if (strcmp(optarg, "rgb332") == 0)
+                psettings->cmap = &cmap_rgb332;
+            else if (strcmp(optarg, "xterm256") == 0)
+                psettings->cmap = &cmap_xterm256;
+            else
+                goto argerr;
             break;
         default:
             goto argerr;
@@ -525,6 +569,7 @@ int main(int argc, char *argv[])
         NULL,   /* output */
         20,     /* render_interval */
         1.0,    /* play_speed */
+        &cmap_xterm256, /* cmap */
     };
 
     if (parse_args(argc, argv, &settings) != 0) {
@@ -552,7 +597,7 @@ int main(int argc, char *argv[])
 
     /* init gif */
     img = (unsigned char *) ecalloc(pb.width * pb.height, 1);
-    set_colormap(colormap);
+    settings.cmap->set_colormap(colormap);
     if (!(gsdata = newgif((void **) &gifimage, pb.width, pb.height, colormap, 0))) {
         free(img);
         term_die(&term);
@@ -611,7 +656,7 @@ int main(int argc, char *argv[])
             }
 
             /* take screenshot */
-            apply_colormap(&pb, img);
+            apply_colormap(settings.cmap, &pb, img);
             is_render_deferred = delay < gif_render_interval;
             if (!is_render_deferred) {
                 controlgif(gsdata, -1, delay, 0, 0);

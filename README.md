@@ -97,6 +97,10 @@ Options:
 -s NUM, --play-speed=NUM               specify the factor of the play speed.
                                        A larger value means faster play.
                                        (default: 1.0)
+-m COLORMAP, --colormap=COLORMAP       specify a colormap from the following
+                                       list (default: xterm256):
+                                         rgb332   -> R:3bit, G:3bit, B:2bit
+                                         xterm256 -> xterm 256color
 ```
 
 
