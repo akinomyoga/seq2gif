@@ -256,7 +256,7 @@ static void show_help()
 static int parse_args(int argc, char *argv[], struct settings_t *psettings)
 {
     int n;
-    char const *optstring = "w:h:HVl:f:b:c:t:jr:i:o:I:s:";
+    char const *optstring = "w:h:HVl:f:b:c:t:jr:i:o:I:s:B";
 #ifdef HAVE_GETOPT_LONG
     int long_opt;
     int option_index;
