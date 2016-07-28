@@ -469,23 +469,23 @@ static int parse_args(int argc, char *argv[], struct settings_t *psettings)
             }
             break;
         case 'p':
-            if (strcmp(optarg,"vga") == 0) {
+            if (strcmp(optarg, "vga") == 0)
                 psettings->palette16 = palette16_standard_vga;
-            } else if (strcmp(optarg,"cmd") == 0) {
-                psettings->palette16 = palette16_winxp_cmd;
-            } else if (strcmp(optarg,"app") == 0) {
-                psettings->palette16 = palette16_terminal_app;
-            } else if (strcmp(optarg,"putty") == 0) {
-                psettings->palette16 = palette16_putty;
-            } else if (strcmp(optarg,"mirc") == 0) {
-                psettings->palette16 = palette16_mirc;
-            } else if (strcmp(optarg,"xterm") == 0) {
-                psettings->palette16 = palette16_xterm;
-            } else if (strcmp(optarg,"rosa") == 0) {
-                psettings->palette16 = palette16_rosaterm;
-            } else if (strcmp(optarg,"seq2gif") == 0) {
-                psettings->palette16 = palette16_seq2gif;
-            } else {
+            else if (strcmp(optarg, "cmd") == 0)
+              psettings->palette16 = palette16_winxp_cmd;
+            else if (strcmp(optarg, "app") == 0)
+              psettings->palette16 = palette16_terminal_app;
+            else if (strcmp(optarg, "putty") == 0)
+              psettings->palette16 = palette16_putty;
+            else if (strcmp(optarg, "mirc") == 0)
+              psettings->palette16 = palette16_mirc;
+            else if (strcmp(optarg, "xterm") == 0)
+              psettings->palette16 = palette16_xterm;
+            else if (strcmp(optarg, "rosa") == 0)
+              psettings->palette16 = palette16_rosaterm;
+            else if (strcmp(optarg, "seq2gif") == 0)
+              psettings->palette16 = palette16_seq2gif;
+            else {
                 fprintf(stderr, PACKAGE_NAME ": unknown value for --palette16 (-p) option.\n");
                 goto argerr;
             }
