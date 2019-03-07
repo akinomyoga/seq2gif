@@ -650,7 +650,7 @@ int main(int argc, char *argv[])
     }
 
     if (settings.palette16) {
-        memcpy(color_list,settings.palette16,sizeof(uint32_t)*16);
+        memcpy(color_list, settings.palette16, sizeof(uint32_t) * 16);
     }
 
     /* init */
