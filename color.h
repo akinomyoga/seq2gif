@@ -20,6 +20,8 @@
 
 extern uint32_t color_list[256];
 
+const uint32_t* color_parse_palette16(const char* name);
+
 /* emacs Local Variables:      */
 /* emacs mode: c               */
 /* emacs tab-width: 4          */

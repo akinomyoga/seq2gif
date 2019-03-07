@@ -17,10 +17,11 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include "color.h"
 
 /*
-    Standard VGA colors
+    The default color list
 
     byte order: (MSB) RR GG BB (LSB)
 */
@@ -61,6 +62,102 @@ uint32_t color_list[256] = {
     0x585858, 0x626262, 0x6C6C6C, 0x767676, 0x808080, 0x8A8A8A, 0x949494, 0x9E9E9E,
     0xA8A8A8, 0xB2B2B2, 0xBCBCBC, 0xC6C6C6, 0xD0D0D0, 0xDADADA, 0xE4E4E4, 0xEEEEEE,
 };
+
+/*
+  ANSI colors
+
+  Original seq2gif values
+  - palette16_seq2gif
+
+  Taken from http://en.wikipedia.org/wiki/ANSI_escape_code
+  - palette16_standard_vga Standard VGA colors
+  - palette16_winxp_cmd    Windows XP CMD
+  - palette16_terminal_app Terminal.app
+  - palette16_putty        PuTTY
+  - palette16_mirc         mIRC
+  - palette16_xterm        xterm
+  - palette16_css          CSS/HTML (incomplete)
+  - palette16_x11          X (incomplete)
+
+  rosaterm default
+  - palette16_rosaterm
+*/
+
+static const uint32_t palette16_seq2gif[16] = {
+    0x262626, 0xd70000, 0x5f8700, 0xaf8700, 0x0087ff, 0xaf005f, 0x0087ff, 0xe4e4e4,
+    0x1c1c1c, 0xd75f00, 0x585858, 0x626262, 0x808080, 0x5f5faf, 0x8a8a8a, 0xffffd7,
+};
+
+static const uint32_t palette16_standard_vga[16] = {
+    0x000000, 0xAA0000, 0x00AA00, 0xAA5500, 0x0000AA, 0xAA00AA, 0x00AAAA, 0xAAAAAA,
+    0x555555, 0xFF5555, 0x55FF55, 0xFFFF55, 0x5555FF, 0xFF55FF, 0x55FFFF, 0xFFFFFF,
+    /*
+    0x000000, 0xAA0000, 0x00AA00, 0xAA5500, 0x0000AA, 0xAA00AA, 0x00AAAA, 0xAAAAAA,
+    0x555555, 0xFF5555, 0x55FF55, 0xFFFF55, 0x5555FF, 0xFF55FF, 0x55FFFF, 0xDFDFDF,
+    */
+};
+
+static const uint32_t palette16_winxp_cmd[16] = {
+    0x000000, 0x800000, 0x008000, 0x808000, 0x000080, 0x800080, 0x008080, 0xC0C0C0,
+    0x808080, 0xFF0000, 0x00FF00, 0xFFFF00, 0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+};
+
+static const uint32_t palette16_terminal_app[16] = {
+    0x000000, 0xC23621, 0x25BC24, 0xADAD27, 0x492EE1, 0xD338D3, 0x33BBC8, 0xCBCCCD,
+    0x818383, 0xFC391F, 0x31E722, 0xEAEC23, 0x5833FF, 0xF935F8, 0x14F0F0, 0xE9EBEB,
+};
+
+static const uint32_t palette16_putty[16] = {
+    0x000000, 0xBB0000, 0x00BB00, 0xBBBB00, 0x0000BB, 0xBB00BB, 0x00BBBB, 0xBBBBBB,
+    0x555555, 0xFF5555, 0x55FF55, 0xFFFF55, 0x5555FF, 0xFF55FF, 0x55FFFF, 0xFFFFFF,
+};
+
+static const uint32_t palette16_xterm[16] = {
+    0x000000, 0xCD0000, 0x00CD00, 0xCDCD00, 0x0000EE, 0xCD00CD, 0x00CDCD, 0xE5E5E5,
+    0x7F7F7F, 0xFF0000, 0x00FF00, 0xFFFF00, 0x5C5CFF, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+};
+
+static const uint32_t palette16_mirc[16] = {
+    0x000000, 0x7F0000, 0x009300, 0xFC7F00, 0x00007F, 0x9C009C, 0x009393, 0xD2D2D2,
+    0x7F7F7F, 0xFF0000, 0x00FC00, 0xFFFF00, 0x0000FC, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+};
+
+/* non terminal colors (without full specification of bright colors)
+static const uint32_t palette16_x11[16] = {
+    0x000000, 0xFF0000, 0x008000, 0xFFFF00, 0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+    unknown,  unknown,  0x90EE90, 0xE1FFE0, 0xADD8E6, unknown,  0xE0FFFF, unknown,
+};
+
+static const uint32_t palette16_css[16] = {
+    0x000000, 0xFF0000, 0x00FF00, 0xFFFF00, 0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF,
+    unknown,  unknown,  0x90EE90, 0xFFFFE0, 0xADD8E6, unknown,  0xE0FFFF, unknown,
+}; */
+
+static const uint32_t palette16_rosaterm[16] = {
+    0x000000, 0x800000, 0x008000, 0x808000, 0x000080, 0x800080, 0x008080, 0xC0C0C0,
+    0x808080, 0xFF0000, 0x32CD32, 0xFF7D00, 0x0000FF, 0xFF00FF, 0x40E0D0, 0xFFFFFF,
+};
+
+const uint32_t* color_parse_palette16(const char* name) {
+  if (strcmp(name, "vga") == 0)
+    return palette16_standard_vga;
+  else if (strcmp(name, "cmd") == 0)
+    return palette16_winxp_cmd;
+  else if (strcmp(name, "app") == 0)
+    return palette16_terminal_app;
+  else if (strcmp(name, "putty") == 0)
+    return palette16_putty;
+  else if (strcmp(name, "mirc") == 0)
+    return palette16_mirc;
+  else if (strcmp(name, "xterm") == 0)
+    return palette16_xterm;
+  else if (strcmp(name, "rosa") == 0)
+    return palette16_rosaterm;
+  else if (strcmp(name, "seq2gif") == 0)
+    return palette16_seq2gif;
+  else
+    return NULL;
+}
 
 /* emacs Local Variables:      */
 /* emacs mode: c               */
